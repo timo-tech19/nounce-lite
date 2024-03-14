@@ -95,7 +95,7 @@ function App() {
 	};
 
 	return (
-		<div className='px-8 max-w-7xl mx-auto'>
+		<div className='px-8 max-w-7xl mx-auto pb-8'>
 			<nav className='py-8'>
 				<h1 className='text-4xl font-bold'>
 					<span className='text-teal-500'>nounce</span>-lite
@@ -128,7 +128,7 @@ function App() {
 								</div>
 							</div>
 						</form>
-						<ul className='flex flex-row gap-2 items-center justify-center mt-4'>
+						<ul className='flex flex-row flex-wrap gap-2 items-center justify-center mt-4'>
 							{words.map((word, index) => {
 								return (
 									<li key={index} className='bg-white p-2 rounded-md'>

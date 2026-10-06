@@ -1,0 +1,24 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "nounce-lite",
+	"main": "./worker/index.ts",
+	"compatibility_date": "2026-10-01",
+	"assets": {
+		// Unknown paths fall back to index.html; only /api/* reaches the Worker.
+		"not_found_handling": "single-page-application",
+		"run_worker_first": ["/api/*"],
+	},
+	"vars": {
+		"DAILY_LIMIT_PER_IP": "25",
+		"DAILY_LIMIT_GLOBAL": "600",
+		// Set to "true" in .dev.vars to run locally without an OpenAI key.
+		"MOCK_OPENAI": "false",
+	},
+	// Exact daily request counts for rate limiting (SQLite-backed, available on the free plan).
+	"durable_objects": {
+		"bindings": [{ "name": "COUNTER", "class_name": "DailyCounter" }],
+	},
+	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["DailyCounter"] }],
+	"secrets": { "required": ["OPENAI_API_KEY"] },
+	"observability": { "enabled": true },
+}

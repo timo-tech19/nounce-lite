@@ -1,8 +1,9 @@
-import { defineConfig } from "vite";
+import { cloudflare } from "@cloudflare/vite-plugin";
+import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import crossOriginIsolation from "vite-plugin-cross-origin-isolation";
+import { defineConfig } from "vite";
 
-// https://vitejs.dev/config/
+// One dev server runs both the SPA and the Worker (inside workerd, the real Workers runtime).
 export default defineConfig({
-	plugins: [react(), crossOriginIsolation()],
+	plugins: [react(), tailwindcss(), cloudflare()],
 });

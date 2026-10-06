@@ -2,11 +2,18 @@
 
 Learn a word by saying it. nounce writes a sentence around a word from your list, hides the word, and listens while you read the sentence aloud. AI transcribes your answer and marks it, with a note on what to fix.
 
-**Live demo:** _coming soon_ · **Stack:** React 19, Cloudflare Workers, Hono, OpenAI, TypeScript
+**Stack:** React 19, TypeScript, Tailwind CSS v4, Cloudflare Workers, Hono, Zod, OpenAI (Responses API + speech-to-text), Vitest
 
-<!-- Record one full round (write → record → feedback) and save it as docs/demo.gif, then uncomment:
-![A full round: the sentence appears with a gap, the learner records an answer, and it's marked 9/10](docs/demo.gif)
--->
+![The sentence with the word revealed in highlighter, a 9/10 score circled in red pen, and feedback on what the learner said](docs/screenshots/feedback.png)
+
+<table>
+  <tr>
+    <td width="68%"><img src="docs/screenshots/recording.png" alt="Recording an answer: the sentence has a gap and a live waveform shows the microphone input"></td>
+    <td><img src="docs/screenshots/mobile-dark.png" alt="The same round on a phone in dark mode"></td>
+  </tr>
+</table>
+
+<sub>Screenshots are from mock mode (<code>MOCK_OPENAI=true</code>), which stands in for OpenAI with canned replies; see <a href="#run-it-locally">Run it locally</a>.</sub>
 
 ## How it works
 
@@ -21,7 +28,7 @@ POST /api/check  (audio + target) ───► validate size/length · rate-limi
 ◄─── {transcript, usedWord, feedback, score}
 ```
 
-One Worker serves both the built SPA (static assets) and `/api/*`, so there's a single deploy and the OpenAI key lives only in a Worker secret.
+One Worker serves both the built SPA (static assets) and `/api/*`, so it deploys as a single unit and the OpenAI key lives only in a Worker secret.
 
 1. You pick a level (A2 to C1) and an optional topic. The Worker asks the model for one sentence and the exact form of your word it used, then blanks that word out itself. If the model's sentence doesn't contain the word, it retries once.
 2. You record your answer. Chrome and Firefox record webm, Safari records mp4; both go straight to the transcription API, with no in-browser conversion.
@@ -35,7 +42,7 @@ One Worker serves both the built SPA (static assets) and `/api/*`, so there's a 
 - **Grading that understands words.** The old check was `transcript.includes(word)`, which passed "serendipitous" for "serendipity" and failed "Serendipity!". The model now judges form and context, with a deterministic whole-word match passed in as a hint and a score cap when the word was wrong.
 - **Errors people can act on.** Every failure (bad input, rate limit, OpenAI outage or exhausted budget, mic permission denied, offline) has its own message and, where it helps, a retry button. OpenAI's own error text is logged, never shown.
 - **Rate limiting that holds up.** A per-visitor and a global daily cap, counted exactly in a SQLite-backed Durable Object. Visitors are identified by a salted hash of their IP, so raw IPs aren't stored.
-- **Runs without a key.** Set `MOCK_OPENAI=true` and the Worker answers from canned replies at the same `fetch` boundary the tests stub, so you can click through the whole app before adding a key.
+- **Runs without a key.** Set `MOCK_OPENAI=true` and the Worker answers from canned replies at the same `fetch` boundary the tests stub, so you can click through the whole app without an OpenAI account.
 
 ## Run it locally
 
@@ -55,17 +62,9 @@ pnpm dev                         # SPA and Worker together on http://localhost:5
 | `pnpm deploy`     | Build and deploy to Cloudflare                                      |
 | `pnpm cf-typegen` | Regenerate Worker binding types after editing `wrangler.jsonc`      |
 
-## Deploy
+CI (GitHub Actions) runs typecheck, lint, tests and a build on every push, then checks that no API key made it into the client bundle.
 
-```sh
-pnpm exec wrangler login
-pnpm exec wrangler secret put OPENAI_API_KEY
-pnpm deploy
-```
-
-Also set a monthly hard spend limit on the OpenAI project (Settings → Limits). The daily caps in `wrangler.jsonc` keep a public demo cheap; the spend limit is the backstop.
-
-CI (GitHub Actions) runs typecheck, lint, tests and a build on every push, and deploys `main` once `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` are added as repository secrets.
+To deploy your own copy: `pnpm exec wrangler secret put OPENAI_API_KEY`, then `pnpm deploy`. Set a monthly hard spend limit on the OpenAI project too; the daily caps in `wrangler.jsonc` keep usage low, and the spend limit is the backstop.
 
 ## Project layout
 

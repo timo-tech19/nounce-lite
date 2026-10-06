@@ -1,3 +1,231 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "@fontsource-variable/literata";
+@import "@fontsource-variable/atkinson-hyperlegible-next";
+@import "@fontsource-variable/caveat";
+
+/*
+ * An exercise book: cool paper, pale blue rules, a red margin line,
+ * blue ink for actions, red pen for marks, highlighter for the answer.
+ */
+:root {
+	--desk: #e9eef6;
+	--paper: #fbfcfe;
+	--rule: #cbd7ea;
+	--rule-strong: #a9b9d3;
+	--ink: #1b2a4a;
+	--ink-soft: #56627c;
+	--pen: #2346c4;
+	--pen-hover: #1a37a3;
+	--red-pen: #c4362b;
+	--highlight: #ffe46b;
+	--on-pen: #ffffff;
+	color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--desk: #0c1220;
+		--paper: #121a2b;
+		--rule: #24304a;
+		--rule-strong: #34425f;
+		--ink: #e4eaf6;
+		--ink-soft: #9aa6bf;
+		--pen: #8ca6ff;
+		--pen-hover: #a9bcff;
+		--red-pen: #ff8577;
+		--highlight: #f0cf45;
+		--on-pen: #0c1220;
+		color-scheme: dark;
+	}
+}
+
+@theme inline {
+	--color-*: initial;
+	--color-white: #fff;
+	--color-desk: var(--desk);
+	--color-paper: var(--paper);
+	--color-rule: var(--rule);
+	--color-rule-strong: var(--rule-strong);
+	--color-ink: var(--ink);
+	--color-ink-soft: var(--ink-soft);
+	--color-pen: var(--pen);
+	--color-red-pen: var(--red-pen);
+	--color-highlight: var(--highlight);
+
+	--font-sans: "Atkinson Hyperlegible Next Variable", ui-sans-serif, system-ui, sans-serif;
+	--font-serif: "Literata Variable", Georgia, serif;
+	--font-hand: "Caveat Variable", "Bradley Hand", cursive;
+}
+
+@layer base {
+	body {
+		@apply bg-desk font-sans text-ink antialiased;
+		font-size: 1.0625rem;
+		line-height: 1.55;
+	}
+
+	:focus-visible {
+		outline: 2px solid var(--pen);
+		outline-offset: 2px;
+	}
+
+	button:not(:disabled) {
+		cursor: pointer;
+	}
+}
+
+@layer components {
+	.wordmark {
+		@apply font-serif text-2xl font-semibold tracking-tight;
+	}
+	.wordmark-gap {
+		@apply mr-[0.06em] inline-block w-[1.5em] border-b-[3px] border-red-pen;
+	}
+
+	/* The three steps of a round, numbered because they're a sequence. */
+	.steps {
+		@apply grid gap-x-8 gap-y-2 sm:grid-cols-3;
+		counter-reset: step;
+	}
+	.steps li {
+		@apply relative pl-7 text-ink-soft;
+		counter-increment: step;
+	}
+	.steps li::before {
+		@apply absolute left-0 font-hand text-2xl leading-none text-red-pen;
+		content: counter(step) ".";
+		top: 0.05em;
+	}
+
+	/* The exercise page: one sheet with a red margin line, not a stack of cards. */
+	.sheet {
+		@apply relative border border-rule bg-paper px-5 py-7 sm:py-9 sm:pr-10 sm:pl-14;
+		border-radius: 2px 10px 10px 2px;
+	}
+	.sheet::before {
+		@apply absolute top-0 bottom-0 left-2.5 w-px bg-red-pen/60 sm:left-8;
+		content: "";
+	}
+
+	/* The sentence sits on ruled lines, like an exercise book. */
+	.sentence {
+		@apply font-serif text-pretty outline-none;
+		font-size: clamp(1.55rem, 1.1rem + 1.7vw, 2.35rem);
+		line-height: 1.8;
+		background-image: linear-gradient(to bottom, transparent calc(1.8em - 1px), var(--rule) calc(1.8em - 1px));
+		background-size: 100% 1.8em;
+		background-position: 0 -0.32em;
+		transition: opacity 150ms;
+	}
+	.sentence[data-stale] {
+		opacity: 0.45;
+	}
+
+	.gap-empty {
+		@apply mx-[0.1em] inline-block h-[1em] border-b-2 border-ink align-[-0.12em];
+	}
+	.gap-empty[data-state="incorrect"] {
+		@apply border-red-pen;
+	}
+	.gap-filled {
+		@apply rounded-sm px-[0.15em];
+		color: #1b2a4a;
+		background: linear-gradient(
+			100deg,
+			transparent 0.08em,
+			var(--highlight) 0.2em,
+			var(--highlight) calc(100% - 0.15em),
+			transparent
+		);
+		background-repeat: no-repeat;
+		animation: highlight 420ms cubic-bezier(0.3, 0.7, 0.4, 1) both;
+	}
+	@keyframes highlight {
+		from {
+			background-size: 0% 100%;
+		}
+		to {
+			background-size: 100% 100%;
+		}
+	}
+
+	/* The mark: a red-pen score, circled by hand. The one flourish on the page. */
+	.score-mark {
+		@apply relative grid size-24 shrink-0 place-items-center font-hand text-5xl leading-none text-red-pen sm:size-28;
+		rotate: -6deg;
+	}
+	.score-circle {
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 2.6;
+		stroke-linecap: round;
+		stroke-dasharray: 1;
+		animation: draw-circle 650ms 120ms cubic-bezier(0.55, 0.1, 0.3, 1) both;
+	}
+	@keyframes draw-circle {
+		from {
+			stroke-dashoffset: 1;
+		}
+		to {
+			stroke-dashoffset: 0;
+		}
+	}
+
+	.btn-primary {
+		@apply inline-flex items-center justify-center rounded-md bg-pen px-5 py-2.5 font-semibold text-[var(--on-pen)] transition-colors hover:bg-[var(--pen-hover)] disabled:opacity-50;
+	}
+	.btn-secondary {
+		@apply inline-flex items-center justify-center rounded-md border border-rule-strong px-4 py-2.5 font-semibold text-ink transition-colors hover:border-ink disabled:opacity-50;
+	}
+	.link {
+		@apply text-pen underline decoration-rule-strong decoration-1 underline-offset-[0.2em] hover:decoration-pen disabled:opacity-50;
+	}
+	.field {
+		@apply rounded-md border border-rule-strong bg-paper px-3 py-2 text-ink placeholder:text-ink-soft/60 focus-visible:border-pen focus-visible:outline-offset-0;
+	}
+
+	.segmented {
+		@apply inline-flex overflow-hidden rounded-md border border-rule-strong;
+	}
+	.segmented label > span:first-of-type {
+		@apply block cursor-pointer px-3.5 py-2 font-semibold tabular-nums text-ink-soft transition-colors hover:text-ink;
+	}
+	.segmented label + label > span:first-of-type {
+		@apply border-l border-rule-strong;
+	}
+	.segmented input:checked + span {
+		@apply bg-ink text-paper;
+	}
+	.segmented input:focus-visible + span {
+		outline: 2px solid var(--pen);
+		outline-offset: -4px;
+	}
+
+	.record-button {
+		@apply relative grid size-16 shrink-0 place-items-center rounded-full bg-pen text-[var(--on-pen)] transition-colors hover:bg-[var(--pen-hover)] disabled:opacity-50;
+	}
+	.record-button[data-recording] {
+		@apply bg-red-pen;
+	}
+	.record-button[data-recording]::after {
+		@apply absolute inset-0 rounded-full border-2 border-red-pen;
+		content: "";
+		animation: pulse 1.4s ease-out infinite;
+	}
+	@keyframes pulse {
+		to {
+			transform: scale(1.45);
+			opacity: 0;
+		}
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 1ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 1ms !important;
+	}
+}
